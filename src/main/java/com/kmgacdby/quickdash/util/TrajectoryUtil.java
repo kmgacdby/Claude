@@ -25,23 +25,12 @@ public final class TrajectoryUtil {
 	}
 
 	public static final class Prediction {
-		/** Sampled points of the flight path, from "now" up to landing/max range. */
 		public final List<Vec3d> points = new ArrayList<>();
-		/** Non-null if the path intersects the target box before landing. */
 		public Vec3d impactPoint;
-		/** Ticks from now until impact, or -1 if it never hits the target box. */
 		public int impactTick = -1;
-		/** Where the arrow lands / stops being simulated. */
 		public Vec3d landingPoint;
 	}
 
-	/**
-	 * @param startPos   current arrow position
-	 * @param startVel   current arrow velocity (blocks/tick)
-	 * @param world      world for block-collision checks
-	 * @param targetBox  the hitbox to test for a hit (usually the player's bounding box); may be null to skip hit-testing
-	 * @param maxTicks   safety cap on simulation length
-	 */
 	public static Prediction predict(Vec3d startPos, Vec3d startVel, World world, Box targetBox, int maxTicks) {
 		Prediction result = new Prediction();
 		Vec3d pos = startPos;
@@ -52,7 +41,6 @@ public final class TrajectoryUtil {
 			Vec3d nextVel = new Vec3d(vel.x, vel.y - GRAVITY, vel.z).multiply(DRAG);
 			Vec3d nextPos = pos.add(vel);
 
-			// Hit-test against the target box along this tick's segment.
 			if (targetBox != null && result.impactPoint == null) {
 				boolean hits = targetBox.contains(pos) || targetBox.raycast(pos, nextPos).isPresent();
 				if (hits) {
@@ -61,12 +49,11 @@ public final class TrajectoryUtil {
 				}
 			}
 
-			// Stop simulating once the arrow would hit a solid block (its landing point).
 			HitResult blockHit = world.raycast(new RaycastContext(
 					pos, nextPos,
 					RaycastContext.ShapeType.COLLIDER,
 					RaycastContext.FluidHandling.NONE,
-					null));
+					(Entity) null));
 			result.points.add(nextPos);
 			if (blockHit != null && blockHit.getType() != HitResult.Type.MISS) {
 				result.landingPoint = blockHit.getPos();
