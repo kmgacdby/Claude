@@ -43,6 +43,10 @@ public class ClickGuiScreen extends Screen {
 
 	@Override
 	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+		// Let Minecraft render the screen background first. Calling super.render()
+		// after the GUI would apply the vanilla background/blur over our widgets.
+		super.render(context, mouseX, mouseY, delta);
+
 		context.fill(LIST_X - 4, LIST_Y - 16, LIST_X + LIST_WIDTH + 4, LIST_Y + modules.size() * ROW_HEIGHT + 4, 0xB0101014);
 		context.drawText(textRenderer, "QuickDash", LIST_X, LIST_Y - 13, 0xFFFFFFFF, true);
 
@@ -60,7 +64,6 @@ public class ClickGuiScreen extends Screen {
 		}
 
 		if (selectedModule != null) renderSettingsPanel(context, selectedModule);
-		super.render(context, mouseX, mouseY, delta);
 	}
 
 	private void renderSettingsPanel(DrawContext context, Module module) {
