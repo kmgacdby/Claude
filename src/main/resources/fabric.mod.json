@@ -1,0 +1,31 @@
+{
+	"schemaVersion": 1,
+	"id": "quickdash",
+	"version": "${version}",
+	"name": "QuickDash",
+	"description": "客户端功能模组：蘑菇煲自动收纳 / 同色方块寻路 / 箭矢闪避，带 ClickGUI 面板。",
+	"authors": [
+		"kmgacdby"
+	],
+	"contact": {
+		"repo": "https://github.com/kmgacdby/Claude"
+	},
+	"license": "MIT",
+	"icon": "assets/quickdash/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"main": [
+			"com.kmgacdby.quickdash.QuickDashMod"
+		],
+		"client": [
+			"com.kmgacdby.quickdash.QuickDashClient"
+		]
+	},
+	"mixins": [],
+	"depends": {
+		"fabricloader": ">=0.15.11",
+		"minecraft": "~1.20.6",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}
