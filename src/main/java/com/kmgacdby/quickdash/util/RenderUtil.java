@@ -34,7 +34,8 @@ public final class RenderUtil {
 		RenderSystem.lineWidth(2.0F);
 
 		Tessellator tessellator = Tessellator.getInstance();
-		BufferBuilder buffer = tessellator.begin(VertexFormat.DrawMode.DEBUG_LINE_STRIP, VertexFormats.POSITION_COLOR);
+		BufferBuilder buffer = tessellator.getBuffer();
+		buffer.begin(VertexFormat.DrawMode.DEBUG_LINE_STRIP, VertexFormats.POSITION_COLOR);
 		var matrix = matrices.peek().getPositionMatrix();
 		for (Vec3d p : points) {
 			buffer.vertex(matrix, (float) p.x, (float) p.y, (float) p.z).color(r, g, b, a);
