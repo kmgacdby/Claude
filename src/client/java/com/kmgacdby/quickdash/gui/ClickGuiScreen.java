@@ -9,7 +9,6 @@ import net.minecraft.client.util.InputUtil;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class ClickGuiScreen extends Screen {
@@ -17,7 +16,6 @@ public class ClickGuiScreen extends Screen {
 	private static final int LIST_Y = 24;
 	private static final int LIST_WIDTH = 170;
 	private static final int ROW_HEIGHT = 20;
-
 	private static final int SETTINGS_X = LIST_X + LIST_WIDTH + 12;
 	private static final int SETTINGS_Y = LIST_Y;
 	private static final int SETTINGS_WIDTH = 220;
@@ -25,13 +23,8 @@ public class ClickGuiScreen extends Screen {
 	private static final int BOOL_ROW_HEIGHT = 20;
 
 	private final List<Module> modules = ModuleManager.INSTANCE.getModules();
-
-	/** Module currently shown in the right-hand details panel (opened via right-click). */
 	private Module selectedModule;
-	/** Module waiting for the next physical key press to become its bound hotkey (middle-click). */
 	private Module recordingModule;
-
-	/** The DoubleValue slider currently being dragged, if any. */
 	private Setting.DoubleValue draggingSlider;
 
 	public ClickGuiScreen() {
@@ -40,11 +33,11 @@ public class ClickGuiScreen extends Screen {
 
 	@Override
 	public boolean shouldCloseOnEsc() {
-		return false; // ESC is used to cancel keybind recording; handled manually otherwise.
+		return false;
 	}
 
 	@Override
-	public boolean isPauseScreen() {
+	public boolean shouldPause() {
 		return false;
 	}
 
@@ -57,24 +50,16 @@ public class ClickGuiScreen extends Screen {
 			Module module = modules.get(i);
 			int rowY = LIST_Y + i * ROW_HEIGHT;
 			boolean hovered = mouseX >= LIST_X && mouseX <= LIST_X + LIST_WIDTH && mouseY >= rowY && mouseY < rowY + ROW_HEIGHT;
-
 			int bg = module.enabled ? 0xFF3A6FD8 : (hovered ? 0xFF303038 : 0xFF202024);
 			context.fill(LIST_X, rowY, LIST_X + LIST_WIDTH, rowY + ROW_HEIGHT - 2, bg);
-
 			int textColor = module.enabled ? 0xFFFFFFFF : 0xFFC8C8C8;
 			context.drawText(textRenderer, module.name, LIST_X + 6, rowY + 6, textColor, false);
-
-			String keyLabel = module == recordingModule
-					? "..."
-					: (module.boundKey == -1 ? "-" : InputUtil.fromKeyCode(module.boundKey, 0).getLocalizedText().getString());
+			String keyLabel = module == recordingModule ? "..." : (module.boundKey == -1 ? "-" : InputUtil.fromKeyCode(module.boundKey, 0).getLocalizedText().getString());
 			int keyWidth = textRenderer.getWidth(keyLabel);
 			context.drawText(textRenderer, keyLabel, LIST_X + LIST_WIDTH - keyWidth - 6, rowY + 6, 0xFFAAAAAA, false);
 		}
 
-		if (selectedModule != null) {
-			renderSettingsPanel(context, selectedModule);
-		}
-
+		if (selectedModule != null) renderSettingsPanel(context, selectedModule);
 		super.render(context, mouseX, mouseY, delta);
 	}
 
@@ -83,7 +68,6 @@ public class ClickGuiScreen extends Screen {
 		int totalHeight = layoutHeight(settings);
 		context.fill(SETTINGS_X - 4, SETTINGS_Y - 16, SETTINGS_X + SETTINGS_WIDTH + 4, SETTINGS_Y + totalHeight + 4, 0xB0101014);
 		context.drawText(textRenderer, module.name + " 设置", SETTINGS_X, SETTINGS_Y - 13, 0xFFFFFFFF, true);
-
 		int y = SETTINGS_Y;
 		for (Setting setting : settings) {
 			if (setting instanceof Setting.DoubleValue dv) {
@@ -103,36 +87,24 @@ public class ClickGuiScreen extends Screen {
 
 	private int layoutHeight(List<Setting> settings) {
 		int h = 0;
-		for (Setting s : settings) {
-			h += (s instanceof Setting.DoubleValue) ? DOUBLE_ROW_HEIGHT : BOOL_ROW_HEIGHT;
-		}
+		for (Setting s : settings) h += (s instanceof Setting.DoubleValue) ? DOUBLE_ROW_HEIGHT : BOOL_ROW_HEIGHT;
 		return h;
 	}
 
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
-		// Any mouse click cancels an in-progress keybind recording (recording only accepts keyboard input).
-		if (recordingModule != null) {
-			recordingModule = null;
-		}
-
-		// Module list rows.
+		if (recordingModule != null) recordingModule = null;
 		for (int i = 0; i < modules.size(); i++) {
 			int rowY = LIST_Y + i * ROW_HEIGHT;
 			if (mouseX >= LIST_X && mouseX <= LIST_X + LIST_WIDTH && mouseY >= rowY && mouseY < rowY + ROW_HEIGHT - 2) {
 				Module module = modules.get(i);
-				if (button == 0) {
-					ModuleManager.INSTANCE.toggle(module, client);
-				} else if (button == 1) {
-					selectedModule = (selectedModule == module) ? null : module;
-				} else if (button == 2) {
-					recordingModule = module;
-				}
+				if (button == 0) ModuleManager.INSTANCE.toggle(module, client);
+				else if (button == 1) selectedModule = (selectedModule == module) ? null : module;
+				else if (button == 2) recordingModule = module;
 				return true;
 			}
 		}
 
-		// Settings panel widgets.
 		if (selectedModule != null && button == 0) {
 			int y = SETTINGS_Y;
 			for (Setting setting : selectedModule.getSettings()) {
@@ -153,7 +125,6 @@ public class ClickGuiScreen extends Screen {
 				}
 			}
 		}
-
 		return super.mouseClicked(mouseX, mouseY, button);
 	}
 
@@ -173,8 +144,7 @@ public class ClickGuiScreen extends Screen {
 	}
 
 	private void applySliderDrag(Setting.DoubleValue dv, double mouseX) {
-		double progress = (mouseX - SETTINGS_X) / (double) (SETTINGS_WIDTH - 10);
-		dv.setFromSliderProgress(progress);
+		dv.setFromSliderProgress((mouseX - SETTINGS_X) / (double) (SETTINGS_WIDTH - 10));
 	}
 
 	@Override
@@ -185,17 +155,14 @@ public class ClickGuiScreen extends Screen {
 				return true;
 			}
 			recordingModule.boundKey = keyCode;
-			// Avoid the same physical press instantly re-triggering the toggle this frame.
 			recordingModule.keyWasDown = true;
 			recordingModule = null;
 			return true;
 		}
-
 		if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
 			this.close();
 			return true;
 		}
-
 		return super.keyPressed(keyCode, scanCode, modifiers);
 	}
 }
